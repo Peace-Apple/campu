@@ -1,16 +1,22 @@
 import speakersReducer from './speakersReducer';
-import { useEffect, useReducer } from 'react';
+import { useContext, useEffect, useReducer } from 'react';
 import axios from 'axios';
 
+import { InitialSpeakersDataContext } from '../pages/speakers';
+
 function useSpeakerDataManager() {
-  const [{ isLoading, speakerList, favoriteClickCount }, dispatch] = useReducer(
-    speakersReducer,
-    {
-      isLoading: true,
-      speakerList: [],
-      favoriteClickCount: 0,
-    },
-  );
+  const initialSpeakersData = useContext(InitialSpeakersDataContext);
+
+  const [
+    { isLoading, speakerList, favoriteClickCount, hasErrored, error },
+    dispatch,
+  ] = useReducer(speakersReducer, {
+    isLoading: false,
+    speakerList: initialSpeakersData,
+    favoriteClickCount: 0,
+    hasErrored: false,
+    error: null,
+  });
 
   function incrementFavoriteClickCount() {
     dispatch({ type: 'incrementFavoriteClickCount' });
@@ -18,18 +24,26 @@ function useSpeakerDataManager() {
 
   function toggleSpeakerFavorite(speakerRec) {
     const updateData = async function () {
-      axios.put(`/api/speakers/${speakerRec.id}`, speakerRec);
+      await axios.put(`/api/speakers/${speakerRec.id}`, {
+        ...speakerRec,
+        favorite: !speakerRec.favorite,
+      });
       speakerRec.favorite === true
         ? dispatch({ type: 'unfavorite', id: speakerRec.id })
         : dispatch({ type: 'favorite', id: speakerRec.id });
     };
+
     updateData();
   }
 
   useEffect(() => {
     const fetchData = async function () {
-      let result = await axios.get('/api/speakers');
-      dispatch({ type: 'setSpeakerList', data: result.data });
+      try {
+        let result = await axios.get('/api/speakers');
+        dispatch({ type: 'setSpeakerList', data: result.data });
+      } catch (e) {
+        dispatch({ type: 'errored', error: e });
+      }
     };
     fetchData();
 
@@ -44,6 +58,8 @@ function useSpeakerDataManager() {
     favoriteClickCount,
     incrementFavoriteClickCount,
     toggleSpeakerFavorite,
+    hasErrored,
+    error,
   };
 }
 export default useSpeakerDataManager;
