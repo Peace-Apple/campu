@@ -2,16 +2,17 @@ import React, {
     useCallback,
     useContext,
     useEffect,
+    useMemo,
     useReducer,
     useState,
-  } from "react";
+  } from 'react';
   
-  import { Header } from "../src/Header";
-  import { Menu } from "../src/Menu";
-  import SpeakerData from "./SpeakerData";
-  import SpeakerDetail from "./SpeakerDetail";
-  import { ConfigContext } from "./App";
-  import speakersReducer from "./SpeakersReducer";
+  import { Header } from '../src/Header';
+  import { Menu } from '../src/Menu';
+  import SpeakerData from './SpeakerData';
+  import SpeakerDetail from './SpeakerDetail';
+  import { ConfigContext } from './App';
+  import speakersReducer from './SpeakersReducer';
   
   const Speakers = ({}) => {
     const [speakingSaturday, setSpeakingSaturday] = useState(true);
@@ -35,24 +36,36 @@ import React, {
           return (speakingSaturday && sat) || (speakingSunday && sun);
         });
         dispatch({
-          type: "setSpeakerList",
+          type: 'setSpeakerList',
           data: speakerListServerFilter,
         });
       });
       return () => {
-        console.log("cleanup");
+        console.log('cleanup');
       };
     }, []); // [speakingSunday, speakingSaturday]);
   
     const handleChangeSaturday = () => {
       setSpeakingSaturday(!speakingSaturday);
     };
+    const handleChangeSunday = () => {
+      setSpeakingSunday(!speakingSunday);
+    };
+    const heartFavoriteHandler = useCallback((e, favoriteValue) => {
+      e.preventDefault();
+      const sessionId = parseInt(e.target.attributes['data-sessionid'].value);
+      dispatch({
+        type: favoriteValue === true ? 'favorite' : 'unfavorite',
+        sessionId,
+      });
+    }, []);
   
-    const speakerListFiltered = isLoading
-      ? []
-      : speakerList
+    const newSpeakerList = useMemo(
+      () =>
+        speakerList
           .filter(
-            ({ sat, sun }) => (speakingSaturday && sat) || (speakingSunday && sun)
+            ({ sat, sun }) =>
+              (speakingSaturday && sat) || (speakingSunday && sun),
           )
           .sort(function (a, b) {
             if (a.firstName < b.firstName) {
@@ -62,20 +75,11 @@ import React, {
               return 1;
             }
             return 0;
-          });
+          }),
+      [speakingSaturday, speakingSunday, speakerList],
+    );
   
-    const handleChangeSunday = () => {
-      setSpeakingSunday(!speakingSunday);
-    };
-  
-    const heartFavoriteHandler = useCallback((e, favoriteValue) => {
-      e.preventDefault();
-      const sessionId = parseInt(e.target.attributes["data-sessionid"].value);
-      dispatch({
-        type: favoriteValue === true ? "favorite" : "unfavorite",
-        sessionId,
-      });
-    }, []);
+    const speakerListFiltered = isLoading ? [] : newSpeakerList;
   
     if (isLoading) return <div>Loading...</div>;
   
@@ -127,7 +131,7 @@ import React, {
                       bio={bio}
                     />
                   );
-                }
+                },
               )}
             </div>
           </div>
