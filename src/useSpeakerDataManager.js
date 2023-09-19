@@ -1,23 +1,24 @@
 import speakersReducer from './speakersReducer';
+import { useEffect, useReducer } from 'react';
 import axios from 'axios';
-import { useEffect, useReducer, useContext } from 'react';
-
-import { InitialSpeakersDataContext } from '../pages/speakers';
 
 function useSpeakerDataManager() {
-  const initialSpeakersData = useContext(InitialSpeakersDataContext);
+  const [{ isLoading, speakerList, favoriteClickCount }, dispatch] = useReducer(
+    speakersReducer,
+    {
+      isLoading: true,
+      speakerList: [],
+      favoriteClickCount: 10,
+    },
+  );
 
-  const [{ isLoading, speakerList }, dispatch] = useReducer(speakersReducer, {
-    isLoading: false,
-    speakerList: initialSpeakersData,
-  });
+  function incrementFavoriteClickCount() {
+    dispatch({ type: 'incrementFavoriteClickCount' });
+  }
 
   function toggleSpeakerFavorite(speakerRec) {
     const updateData = async function () {
-      axios.put(`/api/speakers/${speakerRec.id}`, {
-        ...speakerRec,
-        favorite: !speakerRec.favorite,
-      });
+      axios.put(`/api/speakers/${speakerRec.id}`, speakerRec);
       speakerRec.favorite === true
         ? dispatch({ type: 'unfavorite', id: speakerRec.id })
         : dispatch({ type: 'favorite', id: speakerRec.id });
@@ -31,10 +32,18 @@ function useSpeakerDataManager() {
       dispatch({ type: 'setSpeakerList', data: result.data });
     };
     fetchData();
+
     return () => {
       console.log('cleanup');
     };
   }, []);
-  return { isLoading, speakerList, toggleSpeakerFavorite };
+
+  return {
+    isLoading,
+    speakerList,
+    favoriteClickCount,
+    incrementFavoriteClickCount,
+    toggleSpeakerFavorite,
+  };
 }
 export default useSpeakerDataManager;
