@@ -1,25 +1,24 @@
 const speakersReducer = (state, action) => {
-    function updateFavorite(favoriteValue) {
-      return state.map((item, index) => {
-        if (item.id === action.sessionId) {
-          return { ...item, favorite: favoriteValue };
-        }
-        return item;
-      });
+  function updateFavorite(favoriteValue) {
+    return state.speakerList.map((item, index) => {
+      if (item.id === action.id) {
+        return { ...item, favorite: favoriteValue };
+      }
+      return item;
+    });
+  }
+  switch (action.type) {
+    case 'setSpeakerList': {
+      return { ...state, speakerList: action.data, isLoading: false };
     }
-    switch (action.type) {
-      case 'setSpeakerList': {
-        return action.data;
-      }
-      case 'favorite': {
-        return updateFavorite(true);
-      }
-      case 'unfavorite': {
-        return updateFavorite(false);
-      }
-      default:
-        return state;
+    case 'favorite': {
+      return { ...state, speakerList: updateFavorite(true) };
     }
-  };
-  export default speakersReducer;
-  
+    case 'unfavorite': {
+      return { ...state, speakerList: updateFavorite(false) };
+    }
+    default:
+      return state;
+  }
+};
+export default speakersReducer;
