@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-
-import { Header } from './Header';
-import { Menu } from './Menu';
+import React, { useEffect, useState, useContext } from 'react';
+import { Header } from '../src/Header';
+import { Menu } from '../src/Menu';
 import SpeakerData from './SpeakerData';
 import SpeakerDetail from './SpeakerDetail';
+import { ConfigContext } from './App';
 
 const Speakers = ({}) => {
   const [speakingSaturday, setSpeakingSaturday] = useState(true);
@@ -12,6 +12,8 @@ const Speakers = ({}) => {
   const [speakerList, setSpeakerList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const context = useContext(ConfigContext);
+
   useEffect(() => {
     setIsLoading(true);
     new Promise(function (resolve) {
@@ -19,21 +21,19 @@ const Speakers = ({}) => {
         resolve();
       }, 1000);
     }).then(() => {
-      setSpeakerList(SpeakerData);
       setIsLoading(false);
+      const speakerListServerFilter = SpeakerData.filter(({ sat, sun }) => {
+        return (speakingSaturday && sat) || (speakingSunday && sun);
+      });
+      setSpeakerList(speakerListServerFilter);
     });
-
     return () => {
       console.log('cleanup');
     };
-  }, []);
+  }, []); // [speakingSunday, speakingSaturday]);
 
   const handleChangeSaturday = () => {
     setSpeakingSaturday(!speakingSaturday);
-  };
-
-  const handleChangeSunday = () => {
-    setSpeakingSunday(!speakingSunday);
   };
 
   const speakerListFiltered = isLoading
@@ -53,6 +53,10 @@ const Speakers = ({}) => {
           return 0;
         });
 
+  const handleChangeSunday = () => {
+    setSpeakingSunday(!speakingSunday);
+  };
+
   const heartFavoriteHandler = (e, favoriteValue) => {
     e.preventDefault();
     const sessionId = parseInt(e.target.attributes['data-sessionid'].value);
@@ -64,6 +68,7 @@ const Speakers = ({}) => {
         return item;
       }),
     );
+    //console.log("changing session favorte to " + favoriteValue);
   };
 
   if (isLoading) return <div>Loading...</div>;
@@ -73,31 +78,33 @@ const Speakers = ({}) => {
       <Header />
       <Menu />
       <div className="container">
-        <div className="btn-toolbar margintopbottom5 chekbox-bigger">
-          <div className="hide">
-            <div className="form-check-inline">
-              <label className="form-check-label">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  onChange={handleChangeSaturday}
-                  checked={speakingSaturday}
-                />
-                Saturday Speakers
-              </label>
+        <div className="btn-toolbar  margintopbottom5 checkbox-bigger">
+          {context.showSpeakerSpeakingDays === false ? null : (
+            <div className="hide">
+              <div className="form-check-inline">
+                <label className="form-check-label">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    onChange={handleChangeSaturday}
+                    checked={speakingSaturday}
+                  />
+                  Saturday Speakers
+                </label>
+              </div>
+              <div className="form-check-inline">
+                <label className="form-check-label">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    onChange={handleChangeSunday}
+                    checked={speakingSunday}
+                  />
+                  Sunday Speakers
+                </label>
+              </div>
             </div>
-            <div className="form-check-inline">
-              <label className="form-check-label">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  onChange={handleChangeSunday}
-                  checked={speakingSunday}
-                />
-                Sunday Speakers
-              </label>
-            </div>
-          </div>
+          )}
         </div>
         <div className="row">
           <div className="card-deck">
@@ -108,10 +115,10 @@ const Speakers = ({}) => {
                     key={id}
                     id={id}
                     favorite={favorite}
+                    onHeartFavoriteHandler={heartFavoriteHandler}
                     firstName={firstName}
                     lastName={lastName}
                     bio={bio}
-                    onHeartFavoriteHandler={heartFavoriteHandler}
                   />
                 );
               },
