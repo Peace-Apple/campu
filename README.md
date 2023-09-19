@@ -1,2 +1,2 @@
 ### Campu
-A simple React app created with NextJS
+A simple React app created with NextJS looking at React Hooks.
